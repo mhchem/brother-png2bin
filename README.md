@@ -37,16 +37,16 @@ Requires npm module pngjs
 
 - Printer is off for a few seconds
 - Printer is connected via USB
-- QL-700, QL710W, QL-720NW
+- QL-7xx
   - Press and hold the WiFi button, then press and hold the Power button
   - Wait a few seconds until WiFi and Power LED light up
-- QL-820NWB, TD-4550DNWB
+- QL-8xx, TD-4550DNWB
   - Press and hold the OK button, then press and hold the Power button
   - Wait a few seconds until "Mass Storage Mode" appears on the LCD
-- TD-2130N
+- TD-2xxx
   - Press and hold the Print button, then press and hold the Power button
   - The Power LED lights in orange
-- TD-4520DN
+- TD-4xxxx
   - Press and hold the Function button (right-most button), then press the Power button
   - The Power LED lights in green
 - Release the buttons
