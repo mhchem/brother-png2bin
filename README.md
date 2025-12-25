@@ -9,7 +9,7 @@ Devices with Mass Storage Mode
 
 Device | dpi | Support Status
 --|--|--
-Brother QL-710W | 300 dpi | ✅
+Brother QL-710W | 300 dpi | ✅ Tested
 Brother QL-720NW | 300 dpi | Not tested
 Brother QL-820NWB | 300 dpi | Not tested
 Brother TD-2020 | 203 dpi | Not tested
@@ -26,6 +26,10 @@ Brother TD-4420DN | 203 dpi | Not tested
 Brother TD-4520DN | 300 dpi | Not tested
 Brother TD-4550DNWB | 300 dpi | Not tested
 
+If you successfully used one of the printers above, please tell me.
+
+If you have a Brother printer with Mass Storage Mode that is not listed above, please create an issue.
+
 ## Libraries
 Requires npm module pngjs
 
@@ -35,7 +39,7 @@ Requires npm module pngjs
 
 ## Printer Usage
 
-- Printer is off for a few seconds
+- Printer has been off for a few seconds
 - Printer is connected via USB
 - QL-7xx
   - Press and hold the WiFi button, then press and hold the Power button
@@ -52,4 +56,4 @@ Requires npm module pngjs
 - Release the buttons
 - The printer is now a mass storage drive
 - Copy the BIN file to the drive (or use `brother-qt-png2bin` to directly write to the drive)
-- Press WiFi/OK/Function button to print all files that exist on the drive
+- Press WiFi/OK/Print/Function button to print all files that exist on the drive

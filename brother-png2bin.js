@@ -2,7 +2,7 @@
 // Use Brother label printers (QL-710W, QL-720NW) without a driver on any operation system. \
 // Command-line tool (node.js) to convert a PNG file into a BIN file that Brother label printers can print.
 
-// v1.1.0 2025-12-23
+// v1.2.0 2025-12-24
 
 // MIT No Attribution
 // 
@@ -49,8 +49,10 @@ if (!inFile || !outFile || argStatus === 999) {
 	// console.error('  -c1  with TIFF compression');
 	// Will stop at !tapeSize
 } else {
+	console.log(` * Reading ${inFile}.`)
 	const pngBuffer = fs.readFileSync(inFile);
-	png = PNG.sync.read(pngBuffer);
+	png = {};
+	png.orig = PNG.sync.read(pngBuffer);
 }
 
 // Technical References
@@ -81,21 +83,43 @@ const tapeSizes = [
 
 
 let tapeSize;
-if (png && png.height) {
+if (png) {
+	console.log(` * PNG has ${png.orig.width} x ${png.orig.height} px.`);
 	tapeSizes.forEach(t => {
-		if (t.px === png.height) {
+		if (t.px === png.orig.width) {
 			tapeSize = t;
+			png.width = png.orig.width;
+			png.height = png.orig.height;
+			png.pixel = function(x, y) {
+				let idx = (png.orig.width * y + png.orig.width - x - 1) << 2;
+				return [png.orig.data[idx], png.orig.data[idx + 1], png.orig.data[idx + 2]];
+			}
+			console.log(` * Printing PNG top edge first (${png.width} dots).`)
 		}
 	});
 	if (!tapeSize) {
-		console.error('PNG height does not fit.');
+		tapeSizes.forEach(t => {
+			if (t.px === png.orig.height) {
+				tapeSize = t;
+				png.width = png.orig.height;
+				png.height = png.orig.width;
+				png.pixel = function(x, y) {
+				let idx = (png.orig.width * x + y) << 2;
+				return [png.orig.data[idx], png.orig.data[idx + 1], png.orig.data[idx + 2]];
+				}
+				console.log(` * Printing PNG left edge first (${png.width} dots).`)
+			}
+		});
+	}
+	if (!tapeSize) {
+		console.error('PNG height or width does not fit.');
 		// Will stop at !tapeSize
 	}
 }
 if (!tapeSize) {
 	console.error('Allowed PNG dimensions:');
 	tapeSizes.forEach(t => {
-		console.error(`  ${t.mm} mm wide tape, ${t.dpi} dpi printer: Required PNG height ${t.px} px.`);
+		console.error(`  ${t.mm} mm wide tape, ${t.dpi} dpi printer: Required PNG dimension ${t.px} px.`);
 	})
 	process.exit(1);
 }
@@ -109,68 +133,75 @@ if (png.width > 7992) {
 
 let raster = [];
 const lineSize = isTiffCompressed ? tapeSize.lineSizeTiff : Math.ceil(tapeSize.px / 8);
-let ignoredMarginPixels = false;
-const xShiftToMinLength = Math.max(0, Math.ceil(((tapeSize.minLength + 2 * tapeSize.minMargin) - png.width) / 2));
-const yShiftToCenter = Math.round((tapeSize.px - png.height) / 2);  // Not used at the moment, as we only accept PNGs with perfect height
-for (let x = 0; x < png.width - 1 + 2 * xShiftToMinLength; x++) {
+
+for (let y = 0; y < png.height; y++) {
 	let line = [];
-	let inMargin = false;
-	if (x < tapeSize.minMargin || x > 2 * xShiftToMinLength + png.width - tapeSize.minMargin - 1) {
-		inMargin = true;
-	}
 	let byte = 0;
-	for (let y = 0; y < lineSize * 8; y++) {
-		if (xShiftToMinLength <= x && x < xShiftToMinLength + png.width && yShiftToCenter <= y && y < yShiftToCenter + png.height) {
-			let idx = (png.width * (y - yShiftToCenter) + (x - xShiftToMinLength)) << 2;
-			byte = byte | (0.299 * png.data[idx] + 0.587 * png.data[idx + 1] + 0.114 * png.data[idx + 2] < 128 ? 1 : 0) << (7 - (y % 8));
+	for (let x = 0; x < lineSize * 8; x++) {
+		if (x < png.width) {
+			let p = png.pixel(x, y);
+			byte = byte | (0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2] < 128 ? 1 : 0) << (7 - (x % 8));
 		}
-		if ((y % 8) === 7) {  // 8 bits collected
-			if (inMargin) {
-				ignoredMarginPixels ||= byte;
-			} else {
-				line.push(byte);
-			}
+		if ((x % 8) === 7) {  // 8 bits collected
+			line.push(byte);
 			byte = 0;
 		}
 	}
-	if (!inMargin) {
-		if (!isTiffCompressed) {
-			raster.push(line);
-		} else {
-			// TIFF compression
-			let lineTiff = [];
-			let i = 0;
-			while (i < line.length) {
-				let count = 1;
+	if (!isTiffCompressed) {
+		raster.push(line);
+	} else {
+		// TIFF compression
+		let lineTiff = [];
+		let i = 0;
+		while (i < line.length) {
+			let count = 1;
+			// Identicals
+			while (i + count < line.length && line[i] === line[i + count] && count < 128) {
+				count++;
+			}
+			if (count > 1) {
 				// Identicals
-				while (i + count < line.length && line[i] === line[i + count] && count < 128) {
+				lineTiff.push(1 - count);
+				lineTiff.push(line[i]);
+				i += count;
+			} else {
+				// Non-identicals
+				while (i + count < line.length && line[i + count - 1] !== line[i + count] && count < 128 && (i + count + 1 === line.length || line[i + count] !== line[i + count + 1])) {
 					count++;
 				}
-				if (count > 1) {
-					// Identicals
-					lineTiff.push(1 - count);
-					lineTiff.push(line[i]);
-					i += count;
-				} else {
-					// Non-identicals
-					while (i + count < line.length && line[i + count - 1] !== line[i + count] && count < 128 && (i + count + 1 === line.length || line[i + count] !== line[i + count + 1])) {
-						count++;
-					}
-					lineTiff.push(count - 1);
-					for (let j = 0; j < count; j++) {
-							lineTiff.push(line[i + j]);
-					}
-					i += count;
+				lineTiff.push(count - 1);
+				for (let j = 0; j < count; j++) {
+						lineTiff.push(line[i + j]);
 				}
+				i += count;
 			}
-			if (lineTiff.length === 2 && lineTiff[1] === 0) {
-				raster.push(0x5A);  // Empty line
-			} else {
-				raster.push(lineTiff);
-			}
+		}
+		if (lineTiff.length === 2 && lineTiff[1] === 0) {
+			raster.push(0x5A);  // Empty line
+		} else {
+			raster.push(lineTiff);
 		}
 	}
 }
+
+let marginPixels = tapeSize.minMargin;
+while (marginPixels > 0 && raster.length >= 2 && 0 === raster[0].reduce((a, b) => a + b) && 0 === raster[raster.length - 1].reduce((a, b) => a + b)) {
+	raster = raster.slice(1, -1);
+	marginPixels--;
+}
+if (marginPixels > 0) {
+	console.log('!! Extending print area as there are black pixels in the non-printable margins.')
+}
+
+if (raster.length < tapeSize.minLength) {
+	console.log('!! Extending print area to reach the minimum print length.');
+	let size = Math.ceil((tapeSize.minLength - raster.length) / 2);
+	raster = (new Array(size).fill(new Array(lineSize).fill(0))).concat(raster);
+	raster = raster.concat(new Array(size).fill(new Array(lineSize).fill(0)));
+}
+
+console.log(`>> Continuous length tape ${tapeSize.mm} mm, length: ${Math.round((png.width) / tapeSize.dpi * 25.4 * 10) / 10} mm (${tapeSize.dpi} dpi).`);
+console.log(`>> Tape print area ${raster.length + 2 * tapeSize.minMargin} x ${lineSize * 8} dots = data for ${raster.length} x ${lineSize * 8} dots without margins.`);
 
 
 let out = [];
@@ -206,22 +237,10 @@ out.push(0x1A);
 out.push(...[0x1B, 0x69, 0x61, 0xFF]);
 
 
+console.log(` * Writing bin file for Brother label printer at ${outFile}`);
 const buffer = Buffer.from(out);
 fs.writeFileSync(outFile, buffer);
 
-
-console.log(`Created bin file for Brother label printer at ${outFile}`);
-console.log(`> Continuous length tape ${tapeSize.mm} mm, length: ${Math.round((2 * xShiftToMinLength + png.width) / tapeSize.dpi * 25.4 * 10) / 10} mm (${tapeSize.dpi} dpi).`);
-console.log(`> PNG ${png.width} x ${png.height} px, tape print data ${raster.length} x ${lineSize * 8} px (${2 * xShiftToMinLength + png.width} x ${lineSize * 8} px with margins).`);
-if (ignoredMarginPixels) {
-	console.log(`> Ignored pixels in 3 mm begin/end margin.`);
-}
-if (xShiftToMinLength !== 0) {
-	console.log(`> Horiztonally centered to reach minimum length.`);
-}
-if (yShiftToCenter !== 0) {
-	console.log(`> Vertically centered because PNG height ${png.height} px < tape width ${tapeSize.px} px.`);
-}
-console.log('(Press and hold WiFi/OK/Print/Function + Power until LEDs light up.)');
-console.log('(Then copy bin file to mass storage drive.');
-console.log('(Then press WiFi/OK/Print/Function to print.)');
+console.log(' (Press and hold WiFi/OK/Print/Function + Power until LEDs light up.)');
+console.log(' (Then copy bin file to mass storage drive.)');
+console.log(' (Then press WiFi/OK/Print/Function to print.)');
