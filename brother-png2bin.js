@@ -2,7 +2,7 @@
 // Use Brother label printers (QL-710W, QL-720NW) without a driver on any operation system. \
 // Command-line tool (node.js) to convert a PNG file into a BIN file that Brother label printers can print.
 
-// v1.2.0 2025-12-24
+// v1.2.1 2025-12-25
 
 // MIT No Attribution
 // 
@@ -68,16 +68,16 @@ const tapeSizes = [
 	{ mm: 54, px: 636, dpi: 300, lineSizeTiff: 90, minMargin: 35, minLength: 150 },  // QL-7xx
 	{ mm: 62, px: 732, dpi: 300, lineSizeTiff: 90, minMargin: 35, minLength: 150 },  // QL-7xx
 	{ mm: 57, px: 675, dpi: 300, lineSizeTiff: 84, minMargin: 35, minLength: 142 },  // TL-2xxx
-	{ mm: 58, px: 685, dpi: 300, lineSizeTiff: 84, minMargin: 35, minLength: 142 },  // TL-2xxx
 	{ mm: 57, px: 457, dpi: 203, lineSizeTiff: 56, minMargin: 24, minLength: 96 },  // TL-2xxx
+	{ mm: 58, px: 685, dpi: 300, lineSizeTiff: 84, minMargin: 35, minLength: 142 },  // TL-2xxx
 	{ mm: 58, px: 464, dpi: 203, lineSizeTiff: 56, minMargin: 24, minLength: 96 },  // TL-2xxx
-	{ mm: 58, px: 685, dpi: 300, lineSizeTiff: 160, minMargin: 35, minLength: 142 },  // TD-4xxx
+	// This is ambiguous. Should work uncompressed for both devices. { mm: 58, px: 685, dpi: 300, lineSizeTiff: 160, minMargin: 35, minLength: 142 },  // TD-4xxx
+	// This is ambiguous. Should work uncompressed for both devices. { mm: 58, px: 464, dpi: 203, lineSizeTiff: 104, minMargin: 24, minLength: 96 },  // TD-4xxx
 	{ mm: 76, px: 897, dpi: 300, lineSizeTiff: 160, minMargin: 35, minLength: 142 },  // TD-4xxx
-	{ mm: 90, px: 1063, dpi: 300, lineSizeTiff: 160, minMargin: 35, minLength: 142 },  // TD-4xxx
-	{ mm: 102, px: 1200, dpi: 300, lineSizeTiff: 160, minMargin: 35, minLength: 142 },  // TD-4xxx
-	{ mm: 58, px: 464, dpi: 203, lineSizeTiff: 104, minMargin: 24, minLength: 96 },  // TD-4xxx
 	{ mm: 76, px: 607, dpi: 203, lineSizeTiff: 104, minMargin: 24, minLength: 96 },  // TD-4xxx
+	{ mm: 90, px: 1063, dpi: 300, lineSizeTiff: 160, minMargin: 35, minLength: 142 },  // TD-4xxx
 	{ mm: 90, px: 719, dpi: 203, lineSizeTiff: 104, minMargin: 24, minLength: 96 },  // TD-4xxx
+	{ mm: 102, px: 1200, dpi: 300, lineSizeTiff: 160, minMargin: 35, minLength: 142 },  // TD-4xxx
 	{ mm: 102, px: 812, dpi: 203, lineSizeTiff: 104, minMargin: 24, minLength: 96 },  // TD-4xxx
 ];
 

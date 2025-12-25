@@ -35,7 +35,26 @@ Requires npm module pngjs
 
 ## Usage
 
-`node brother-qt-png2bin <input.png> <output.bin>`
+- Create a PNG with correct dimensions
+  - 12 mm wide tape, 300 dpi printer: Required PNG dimension 142 px.
+  - 29 mm wide tape, 300 dpi printer: Required PNG dimension 342 px.
+  - 38 mm wide tape, 300 dpi printer: Required PNG dimension 449 px.
+  - 50 mm wide tape, 300 dpi printer: Required PNG dimension 590 px.
+  - 54 mm wide tape, 300 dpi printer: Required PNG dimension 636 px.
+  - 62 mm wide tape, 300 dpi printer: Required PNG dimension 732 px.
+  - 57 mm wide tape, 300 dpi printer: Required PNG dimension 675 px.
+  - 57 mm wide tape, 203 dpi printer: Required PNG dimension 457 px.
+  - 58 mm wide tape, 300 dpi printer: Required PNG dimension 685 px.
+  - 58 mm wide tape, 203 dpi printer: Required PNG dimension 464 px.
+  - 76 mm wide tape, 300 dpi printer: Required PNG dimension 897 px.
+  - 76 mm wide tape, 203 dpi printer: Required PNG dimension 607 px.
+  - 90 mm wide tape, 300 dpi printer: Required PNG dimension 1063 px.
+  - 90 mm wide tape, 203 dpi printer: Required PNG dimension 719 px.
+  - 102 mm wide tape, 300 dpi printer: Required PNG dimension 1200 px.
+  - 102 mm wide tape, 203 dpi printer: Required PNG dimension 812 px.
+- Convert PNG to BIN
+  - `node brother-qt-png2bin <input.png> <output.bin>`
+- Copy BIN file to printer and print (see below)
 
 ## Printer Usage
 
